@@ -7,8 +7,21 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider } from '@/src/context/ThemeContext';
 
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from 'expo-router';
+
+
+export const unstable_settings = {
+  initialRouteName: '(auth)',
+};
+
+// Prevent the splash screen from auto-hiding before assets are loaded.
+export const loader = SplashScreen.preventAutoHideAsync;
+
 // Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
+//SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -19,15 +32,23 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    // Safely prevent auto-hiding splash screen (fixes Android crash)
+    const prepareSplash = async () => {
+      try {
+        await SplashScreen.preventAutoHideAsync();
+      } catch (err) {
+        console.warn('Error preventing splash auto-hide:', err);
+      }
+    };
+
+    prepareSplash();
+  }, []);
+
+  useEffect(() => {
     if (fontsLoaded || fontError) {
-      // Hide splash screen once fonts are loaded
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
 
   return (
     <ThemeProvider>
